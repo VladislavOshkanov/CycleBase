@@ -25,7 +25,7 @@ class Vertex{
 	Vertex(int N){
 		
 		New = true;
-		Prev = N;
+		Prev = 0;
 	}
 	bool isNew(){
 		return this->New;
@@ -51,6 +51,7 @@ class Graph{
 		G = (Edje**)calloc(sizeof(Edje*), N);
 		for (int i = 0; i < N; i++)
 			G[i] = (Edje*)calloc(sizeof(Edje), N);
+	
 		QuantityOfCB = 0;
 		for (int i = 0; i < N; i++)
 			for (int j = 0;  j < N; j++){
@@ -87,34 +88,46 @@ class Graph{
 	void print(){
 		for (int i = 0; i < Size; i++){
 			for (int j = 0;  j < Size; j++){
-				if (G[i][j].exists == true) cout << "1 "; else cout << "0 ";
+				if (G[i][j].examined == true) cout << "1 "; else cout << "0 ";
 			}
 			cout << endl;
 		}
 	}
 	Edje **G;
-	int QuantityOfCB;
+	int  QuantityOfCB;
 	int Size;	
 };	
 
-void NC(Graph G, Vertex *V[],int x, int y){
-	G.inc();
-	int z = x;
-	while (z != y)
+void NC(Graph G, Vertex *V[],int y, int curr){
+	
+	int z = curr;
+	cout << z+1 << " ";
+	while (z != y){
 		z = V[z]->getPrev();
-	
-	
-	
+		cout << z+1 << " ";
+		 
+	}
+	cout << endl;
 }
+	
 
-void CycleBase(Graph G, Vertex * V[], int N){
- 	while (V[N]->isNew()){
-		 for (int i = 0; i < N; i++){
-			 if (!G.examined(i,N))  G.setExamined(i,N);
-			 if (V[i]->isNew()) {V[i]->setPrev(N); N = i;} else NC(G, V, N , i);
-		}
-		V[N]->notNew();
-	 }
+
+void CycleBase(Graph G, Vertex * V[], int curr, int N){
+	int y;
+	//V[curr]->setPrev(curr);
+	V[curr]-> notNew();
+	for (y = 0; y < N; y++){
+		if (!G.examined(y,curr) && G.exists(y,curr)){ 
+			 G.setExamined(y,curr); 
+			 if (V[y]->isNew()) {
+				 	V[y]->setPrev(curr);
+				 	CycleBase(G,V,y, N); 	 
+				 } else {
+				 	NC(G, V, y , curr); 
+				 }
+			 }
+	}
+		
 }
 
 
@@ -134,16 +147,18 @@ for (int i = 0; i < N; i++)
 
 Graph G(N);
 G.input();
-G.print();
 
-for (int i = 0; i < N; i++)
-	if (V[i]->isNew())  CycleBase(G, V, i);
+int i = 0;
+//for (int i = 0; i < N; i++)
+	if (V[i]->isNew())   CycleBase(G, V, i, N);
 
-if (G.examined(1,2)) cout << "ex"; else cout << "notex";
+ 
 cout << endl;
-cout << G.QuantityOfCB << endl;
+
+//for (int i = 0; i < N; i++)
+//s	if (V[i]->isNew()) cout<< "1"; else cout << "0";
   /*for (set<int>::const_iterator it = c.begin(); it != c.end(); it++)
 	cout << *it << " ";*/
-
+//G.print();
 return 0;
 }
