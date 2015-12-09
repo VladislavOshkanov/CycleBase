@@ -5,17 +5,99 @@
 #include<stdlib.h>
 using namespace std;
 
-set<int> sum(set<int> a, set<int> b){
-  set<int> c;
-  for (set<int>::const_iterator it = a.begin(); it != a.end(); it++)
-	c.insert(*it);
-  for (set<int>::const_iterator it = b.begin(); it != b.end(); it++)
-	c.insert(*it);
-  for (set<int>::const_iterator it = a.begin(); it != a.end(); it++)
-	if (b.find(*it) != b.end()) c.erase(*it);
 
-return c;
+void genCombinations (int * arr , int n , int curPos, list<int> * CB[], list<int> mycycle, int N){
+        int a[N][N], b[N][N], c[N][N];
+		for (int i = 0; i < N; i++)
+			for (int j = 0; j < N; j++){
+				a[i][j] = 0;
+				b[i][j] = 0;
+				c[i][j] = 0;
+			}
+		std::list<int>::const_iterator it_next, first, last;	
+		for (std::list<int>::const_iterator it = mycycle.begin(), end = mycycle.end(); it != end; ++it) { 
+			it_next = it;
+			++it_next ;
+			if (it_next !=  end) {
+    			c[*it - 1][*it_next - 1] = 1;
+    			c[*it_next - 1][*it - 1] = 1;
+			}
+			else
+			{
+				first = mycycle.begin();
+				
+				c[*it - 1][*first - 1] = 1;
+				c[*first - 1][*it - 1] = 1;
+			}
+		}
+		
+
+			
+	
+				
+        if (n == curPos){
+               // printf ("\n-------------we have got next combination---------\n");
+                        for (int i=0; i < n ; i++)  
+							if (arr[i] == 1) {
+								std::list<int>::const_iterator it_next, first, last;	
+								for (std::list<int>::const_iterator it = CB[i]->begin(), end = CB[i]->end(); it != end; ++it) { 
+									it_next = it;
+									++it_next ;
+									if (it_next !=  end) {
+    									if (a[*it - 1][*it_next - 1] == 1){ 
+											a[*it - 1][*it_next - 1] = 0; 
+											a[*it_next - 1][*it - 1] = 0;
+										} else {
+											a[*it - 1][*it_next - 1] = 1; 
+											a[*it_next - 1][*it - 1] = 1;
+										}
+									}
+									else
+									{
+										first = CB[i]->begin();
+										if (a[*it - 1][*first - 1] == 1){ 
+											a[*it - 1][*first - 1] = 0; 
+											a[*first - 1][*it - 1] = 0;
+										} else {
+											a[*it - 1][*first - 1] = 1; 
+											a[*first - 1][*it - 1] = 1;
+										}
+									}
+								}
+								
+							}
+							bool comp = true;
+							for (int i = 0; i < N; i++){
+								
+								for (int j = 0; j < N; j++){
+								if (a[i][j] != c[i][j]) comp = false;
+								}
+
+							}
+							for (int i = 0; i < N; i++)
+								for (int j = 0; j < N; j++){
+									a[i][j] = 0;
+							}
+
+							
+							if (comp) {
+								cout << "it's sum of:";
+								for (int k = 0; k < n; k ++)
+									if (arr[k] == 1) cout << k+1 << " ";
+								cout << endl;
+							}						
+							comp = false;
+                }
+        else{
+                arr [curPos] = 0;
+                genCombinations (arr , n , curPos+1, CB, mycycle, N);
+                arr [curPos] = 1;
+                genCombinations (arr , n , curPos+1, CB, mycycle, N);
+                }
 }
+
+
+
 struct Edje{
 	bool exists;
 	bool examined;
@@ -71,10 +153,12 @@ class Graph{
 		cout << "Please, write all edjes (x,y), to stop write negative integer" << endl;
 		int a,b;
 		cin >> a >> b;
-		while ((a>=0)&&(b>=0)){
+		while ((a>0)&&(b>0)){
 			G[a-1][b-1].exists = true;
 			G[b-1][a-1].exists = true;
-			cin >> a >> b;
+			cin >> a;
+			if (a <= 0) break;
+			cin >> b;
 		}
 	}
 	bool examined(int i, int j){
@@ -98,21 +182,24 @@ class Graph{
 	int Size;	
 };	
 
-void NC(Graph G, Vertex *V[],int y, int curr){
-	
+void NC(Graph G, Vertex *V[],int y, int curr, int *pK, list<int> * CB[]){
 	int z = curr;
+	CB[*pK]->push_back(z+1);
+	cout << *pK+1 << ":";
 	cout << z+1 << " ";
 	while (z != y){
 		z = V[z]->getPrev();
 		cout << z+1 << " ";
+		CB[*pK]->push_back(z+1);
 		 
 	}
 	cout << endl;
+	*pK = *pK + 1;
 }
 	
 
 
-void CycleBase(Graph G, Vertex * V[], int curr, int N){
+void CycleBase(Graph G, Vertex * V[], int curr, int N, int * pK, list<int> * CB[]){
 	int y;
 	//V[curr]->setPrev(curr);
 	V[curr]-> notNew();
@@ -121,9 +208,9 @@ void CycleBase(Graph G, Vertex * V[], int curr, int N){
 			 G.setExamined(y,curr); 
 			 if (V[y]->isNew()) {
 				 	V[y]->setPrev(curr);
-				 	CycleBase(G,V,y, N); 	 
+				 	CycleBase(G,V,y, N, pK, CB); 	 
 				 } else {
-				 	NC(G, V, y , curr); 
+				 	NC(G, V, y , curr, pK, CB); 
 				 }
 			 }
 	}
@@ -137,8 +224,9 @@ int main(){
 	
 int N;
 cin >> N;
-set<int> CB[N];
-
+list<int> * CB[N];
+for (int i = 0; i < N; i++)
+	CB [i] = new list<int>;
 Vertex * V[N];
 for (int i = 0; i < N; i++)
 	V[i] = new Vertex(N);
@@ -147,18 +235,23 @@ for (int i = 0; i < N; i++)
 
 Graph G(N);
 G.input();
-
+int K = 0;
+int *pK = &K;
 int i = 0;
 //for (int i = 0; i < N; i++)
-	if (V[i]->isNew())   CycleBase(G, V, i, N);
+	if (V[i]->isNew())   CycleBase(G, V, i, N, pK, CB);
 
- 
-cout << endl;
+list<int> mycycle;
+int a;
+cout << "Now please write your cycle and finish it with 0" << endl;
+cin >> a;
+while (a > 0){
+	mycycle.push_back(a);
+	cin >> a;	
+}
+int arrT [N];
+genCombinations (arrT , *pK , 0, CB, mycycle, N);
+  
 
-//for (int i = 0; i < N; i++)
-//s	if (V[i]->isNew()) cout<< "1"; else cout << "0";
-  /*for (set<int>::const_iterator it = c.begin(); it != c.end(); it++)
-	cout << *it << " ";*/
-//G.print();
 return 0;
 }
